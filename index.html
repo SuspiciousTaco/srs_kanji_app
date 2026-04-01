@@ -116,6 +116,12 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // 1. Import your database
+        
+        import { ITEM_DB } from "./curriculum.js";
+
+        // 2. Your Firebase Config
+
         const firebaseConfig = {
             apiKey: "AIzaSyBg0TS7T4HdV_d1XfhYAE-PaVzyHgzw8CE",
             authDomain: "web-kanji-srs.firebaseapp.com",
@@ -131,12 +137,6 @@
         const db = getFirestore(app);
         const appId = 'kitaku-kanji-srs';
 
-        const ITEM_DB = [
-            { id: 'k_ku', type: 'kanji', char: '区', meanings: ['ward', 'district'], readings: ['く'], meaningMnemonic: 'This box has a giant X in it. It marks your specific ward or district on the map.', readingMnemonic: 'Which district do you live in? Kita-ku (く).' },
-            { id: 'k_yaku', type: 'kanji', char: '役', meanings: ['duty', 'service', 'role'], readings: ['やく'], meaningMnemonic: 'You are walking with a weapon to do your duty and public service.', readingMnemonic: 'Public service gives you a lot of yak (やく) to deal with.' },
-            { id: 'k_sho', type: 'kanji', char: '所', meanings: ['place'], readings: ['しょ', 'ところ'], meaningMnemonic: 'A door and an axe. This is the place where you chop wood.', readingMnemonic: 'This place is where the shogun (しょ) lives.' },
-            { id: 'v_kuyakusho', type: 'vocabulary', char: '区役所', meanings: ['ward office'], readings: ['くやくしょ'], meaningMnemonic: 'Ward + Service + Place = Ward Office. The place you go to do paperwork in Kita-ku.', readingMnemonic: 'Uses the onyomi readings you just learned: く + やく + しょ.' }
-        ];
         const SRS_INTERVALS = [0, 4*3600000, 8*3600000, 24*3600000, 48*3600000, 168*3600000, 336*3600000, 720*3600000, 2880*3600000, null];
 
         let currentUser = null;
