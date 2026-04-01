@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kita-ku Kanji SRS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A few custom utility classes */
+        .hidden { display: none !important; }
+        body { background-color: #f5f5f4; color: #292524; font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="selection:bg-stone-300">
+
+    <header class="bg-stone-900 text-stone-50 p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <h1 class="text-xl font-bold tracking-tight">📚 Kita-Ku SRS</h1>
+            <span id="sync-status" class="text-sm font-mono text-stone-400">Connecting...</span>
+        </div>
+        <button id="btn-quit" class="hidden text-sm bg-stone-800 hover:bg-stone-700 px-3 py-1.5 rounded transition-colors font-medium">
+            Quit Session
+        </button>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 md:p-8" id="app-container">
+        
+        <div id="view-dashboard" class="space-y-8 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-sm shadow-sm border border-stone-200 p-8 flex flex-col items-center text-center">
+                    <div class="text-4xl mb-4">🎓</div>
+                    <h2 class="text-2xl font-bold mb-1">Lessons</h2>
+                    <p class="text-stone-500 mb-6 font-medium" id="lesson-count">0 available</p>
+                    <button id="btn-start-lessons" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-semibold py-3 px-6 rounded-sm transition-colors disabled:opacity-50">
+                        Start Lessons
+                    </button>
+                </div>
+                <div class="bg-white rounded-sm shadow-sm border border-stone-200 p-8 flex flex-col items-center text-center">
+                    <div class="text-4xl mb-4">📖</div>
+                    <h2 class="text-2xl font-bold mb-1">Reviews</h2>
+                    <p class="text-stone-500 mb-6 font-medium" id="review-count">0 available</p>
+                    <button id="btn-start-reviews" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-semibold py-3 px-6 rounded-sm transition-colors disabled:opacity-50">
+                        Start Reviews
+                    </button>
+                </div>
+            </div>
+            <div class="mt-8 text-center text-xs text-stone-400 font-mono" id="user-id-display">
+                Device Auth ID: Authenticating...
+            </div>
+        </div>
+
+        <div id="view-lesson" class="hidden max-w-2xl mx-auto bg-white shadow-sm border border-stone-200 rounded-sm overflow-hidden">
+            <div id="lesson-header" class="p-16 flex justify-center items-center text-white transition-colors duration-300">
+                <span id="lesson-char" class="text-8xl font-serif tracking-widest"></span>
+            </div>
+            <div class="p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="lesson-meanings" class="text-3xl font-bold capitalize text-stone-800"></h2>
+                    <span id="lesson-type" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-sm bg-stone-100 text-stone-600 border border-stone-200"></span>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-2">Readings</h3>
+                    <p id="lesson-readings" class="text-2xl font-medium text-stone-800"></p>
+                </div>
+                <div class="mb-6 bg-stone-50 p-4 rounded-sm border border-stone-100">
+                    <h3 class="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Meaning Mnemonic</h3>
+                    <p id="lesson-meaning-mnemonic" class="text-stone-700 leading-relaxed"></p>
+                </div>
+                <div class="mb-8 bg-stone-50 p-4 rounded-sm border border-stone-100">
+                    <h3 class="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Reading Mnemonic</h3>
+                    <p id="lesson-reading-mnemonic" class="text-stone-700 leading-relaxed"></p>
+                </div>
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <span id="lesson-progress" class="text-sm text-stone-500 font-medium"></span>
+                    <button id="btn-lesson-next" class="bg-stone-900 hover:bg-stone-800 text-white px-8 py-3 rounded-sm font-semibold transition-colors">
+                        Next Item ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-review" class="hidden max-w-2xl mx-auto mt-4">
+            <div class="flex justify-between items-center mb-4 text-sm font-bold text-stone-500 uppercase tracking-wide">
+                <span id="review-progress"></span>
+                <span id="review-qtype"></span>
+            </div>
+            <div id="review-header" class="rounded-t-sm p-20 flex justify-center items-center shadow-sm text-white transition-colors duration-300">
+                <span id="review-char" class="text-8xl font-serif tracking-widest"></span>
+            </div>
+            <form id="review-form" class="relative shadow-md rounded-b-sm overflow-hidden border-x border-b border-stone-200 bg-white">
+                <input type="text" id="review-input" autocomplete="off" class="w-full text-center text-2xl p-6 outline-none transition-colors font-medium text-stone-900 focus:bg-stone-50 placeholder-stone-300">
+                <button type="submit" id="btn-review-submit" class="hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/30 text-white rounded-sm transition-colors">➔</button>
+            </form>
+            <div id="review-error" class="hidden mt-6 bg-white rounded-sm p-6 shadow-sm border border-red-200">
+                <h3 class="text-red-600 font-bold mb-4">❌ Correct Answer: <span id="review-correct-answer" class="text-stone-900 font-normal"></span></h3>
+                <div class="bg-stone-50 p-4 rounded-sm border border-stone-100">
+                    <h4 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Mnemonic</h4>
+                    <p id="review-error-mnemonic" class="text-stone-700"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-summary" class="hidden max-w-2xl mx-auto bg-white rounded-sm shadow-sm border border-stone-200 p-10 text-center">
+            <h2 class="text-3xl font-bold mb-2 text-stone-800">Session Complete</h2>
+            <p class="text-stone-500 mb-8 font-medium">Progress securely saved to cloud.</p>
+            <div class="grid grid-cols-2 gap-6 mb-10">
+                <div class="bg-stone-50 rounded-sm p-6 border border-stone-100">
+                    <div id="summary-items" class="text-5xl font-bold text-stone-800 mb-2">0</div>
+                    <div class="text-xs font-bold text-stone-400 uppercase tracking-wider">Items Reviewed</div>
+                </div>
+                <div class="bg-stone-50 rounded-sm p-6 border border-stone-100">
+                    <div id="summary-accuracy" class="text-5xl font-bold text-stone-800 mb-2">0%</div>
+                    <div class="text-xs font-bold text-stone-400 uppercase tracking-wider">Accuracy</div>
+                </div>
+            </div>
+            <button id="btn-summary-home" class="bg-stone-900 hover:bg-stone-800 text-white font-semibold py-4 px-8 rounded-sm transition-colors">
+                Return to Dashboard
+            </button>
+        </div>
+    </main>
+
+    <script type="module">
+        // 1. Import Firebase securely from Google's CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // PUT YOUR FIREBASE CONFIG HERE
+        // ==========================================
+        const firebaseConfig = {
+        apiKey: "AIzaSyBg0TS7T4HdV_d1XfhYAE-PaVzyHgzw8CE",
+        authDomain: "web-kanji-srs.firebaseapp.com",
+        projectId: "web-kanji-srs",
+        storageBucket: "web-kanji-srs.firebasestorage.app",
+        messagingSenderId: "131146137850",
+        appId: "1:131146137850:web:0789cf3ebe3e9d3b2e4943",
+        measurementId: "G-DE974KLLB9"
+      };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'kitaku-kanji-srs';
+
+        // --- Data & State ---
+        const ITEM_DB = [
+            { id: 'k_ku', type: 'kanji', char: '区', meanings: ['ward', 'district'], readings: ['く'], meaningMnemonic: 'This box has a giant X in it. It marks your specific ward or district on the map.', readingMnemonic: 'Which district do you live in? Kita-ku (く).' },
+            { id: 'k_yaku', type: 'kanji', char: '役', meanings: ['duty', 'service', 'role'], readings: ['やく'], meaningMnemonic: 'You are walking with a weapon to do your duty and public service.', readingMnemonic: 'Public service gives you a lot of yak (やく) to deal with.' },
+            { id: 'k_sho', type: 'kanji', char: '所', meanings: ['place'], readings: ['しょ', 'ところ'], meaningMnemonic: 'A door and an axe. This is the place where you chop wood.', readingMnemonic: 'This place is where the shogun (しょ) lives.' },
+            { id: 'v_kuyakusho', type: 'vocabulary', char: '区役所', meanings: ['ward office'], readings: ['くやくしょ'], meaningMnemonic: 'Ward + Service + Place = Ward Office. The place you go to do paperwork in Kita-ku.', readingMnemonic: 'Uses the onyomi readings you just learned: く + やく + しょ.' }
+        ];
+        const SRS_INTERVALS = [0, 4*3600000, 8*3600000, 24*3600000, 48*3600000, 168*3600000, 336*3600000, 720*3600000, 2880*3600000, null];
+
+        let currentUser = null;
+        let progress = {};
+        let queue = [];
+        let currentIndex = 0;
+        let sessionMode = null; // 'lesson' or 'review'
+        let reviewState = { showAnswer: false, isCorrect: null, performance: {} };
+
+        // --- DOM Elements ---
+        const els = {
+            syncStatus: document.getElementById('sync-status'),
+            btnQuit: document.getElementById('btn-quit'),
+            views: {
+                dashboard: document.getElementById('view-dashboard'),
+                lesson: document.getElementById('view-lesson'),
+                review: document.getElementById('view-review'),
+                summary: document.getElementById('view-summary')
+            }
+        };
+
+        // --- Core Functions ---
+        function switchView(viewName) {
+            Object.values(els.views).forEach(v => v.classList.add('hidden'));
+            els.views[viewName].classList.remove('hidden');
+            els.btnQuit.classList.toggle('hidden', viewName === 'dashboard');
+        }
+
+        async function saveProgress(updates) {
+            progress = { ...progress, ...updates };
+            if (!currentUser) return;
+            els.syncStatus.textContent = 'Syncing...';
+            els.syncStatus.className = 'text-sm font-mono text-yellow-400';
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'main'), progress, { merge: true });
+                els.syncStatus.textContent = 'Saved to Cloud';
+                els.syncStatus.className = 'text-sm font-mono text-green-400';
+            } catch (e) {
+                console.error(e);
+                els.syncStatus.textContent = 'Sync Error';
+                els.syncStatus.className = 'text-sm font-mono text-red-400';
+            }
+        }
+
+        function updateDashboard() {
+            const now = Date.now();
+            const lessons = ITEM_DB.filter(item => progress[item.id]?.stage === 0);
+            const reviews = ITEM_DB.filter(item => {
+                const p = progress[item.id];
+                return p && p.stage > 0 && p.stage < 9 && p.nextReview <= now;
+            });
+
+            document.getElementById('lesson-count').textContent = `${lessons.length} available`;
+            document.getElementById('review-count').textContent = `${reviews.length} available`;
+            
+            const btnL = document.getElementById('btn-start-lessons');
+            const btnR = document.getElementById('btn-start-reviews');
+            btnL.disabled = lessons.length === 0;
+            btnR.disabled = reviews.length === 0;
+
+            btnL.onclick = () => startSession('lesson', lessons);
+            btnR.onclick = () => {
+                let rq = [];
+                reviews.forEach(item => {
+                    rq.push({ ...item, qType: 'meaning' });
+                    rq.push({ ...item, qType: 'reading' });
+                });
+                rq.sort(() => Math.random() - 0.5); // Shuffle
+                startSession('review', rq);
+            };
+            switchView('dashboard');
+        }
+
+        function startSession(mode, items) {
+            sessionMode = mode;
+            queue = items;
+            currentIndex = 0;
+            if (mode === 'lesson') renderLesson();
+            if (mode === 'review') {
+                reviewState.performance = {};
+                renderReview();
+            }
+        }
+
+        // --- Lesson Logic ---
+        function renderLesson() {
+            if (currentIndex >= queue.length) return finishLessons();
+            const item = queue[currentIndex];
+            const isVocab = item.type === 'vocabulary';
+            
+            document.getElementById('lesson-header').className = `p-16 flex justify-center items-center text-white transition-colors duration-300 ${isVocab ? 'bg-indigo-600' : 'bg-pink-600'}`;
+            document.getElementById('lesson-char').textContent = item.char;
+            document.getElementById('lesson-meanings').textContent = item.meanings.join(', ');
+            document.getElementById('lesson-type').textContent = item.type;
+            document.getElementById('lesson-readings').textContent = item.readings.join(', ');
+            document.getElementById('lesson-meaning-mnemonic').textContent = item.meaningMnemonic;
+            document.getElementById('lesson-reading-mnemonic').textContent = item.readingMnemonic;
+            document.getElementById('lesson-progress').textContent = `Lesson ${currentIndex + 1} of ${queue.length}`;
+            
+            const btnNext = document.getElementById('btn-lesson-next');
+            btnNext.textContent = currentIndex < queue.length - 1 ? 'Next Item ➔' : 'Finish Lessons ➔';
+            btnNext.onclick = () => { currentIndex++; renderLesson(); };
+            
+            switchView('lesson');
+        }
+
+        function finishLessons() {
+            const updates = {};
+            const now = Date.now();
+            queue.forEach(item => { updates[item.id] = { stage: 1, nextReview: now + SRS_INTERVALS[1] }; });
+            saveProgress(updates).then(updateDashboard);
+        }
+
+        // --- Review Logic ---
+        function renderReview() {
+            if (currentIndex >= queue.length) return finishReviews();
+            const item = queue[currentIndex];
+            const isVocab = item.type === 'vocabulary';
+            reviewState.showAnswer = false;
+            
+            document.getElementById('review-header').className = `rounded-t-sm p-20 flex justify-center items-center shadow-sm text-white transition-colors duration-300 ${isVocab ? 'bg-indigo-600' : 'bg-pink-600'}`;
+            document.getElementById('review-char').textContent = item.char;
+            document.getElementById('review-progress').textContent = `Review ${currentIndex + 1} / ${queue.length}`;
+            document.getElementById('review-qtype').textContent = item.qType;
+            
+            const input = document.getElementById('review-input');
+            input.value = '';
+            input.disabled = false;
+            input.placeholder = item.qType === 'reading' ? "Type reading in Hiragana" : "Type English meaning";
+            input.className = "w-full text-center text-2xl p-6 outline-none transition-colors font-medium bg-white text-stone-900 focus:bg-stone-50 placeholder-stone-300";
+            
+            document.getElementById('btn-review-submit').classList.add('hidden');
+            document.getElementById('review-error').classList.add('hidden');
+            switchView('review');
+            setTimeout(() => input.focus(), 50); // Auto-focus input
+        }
+
+        document.getElementById('review-form').onsubmit = (e) => {
+            e.preventDefault();
+            const item = queue[currentIndex];
+            const input = document.getElementById('review-input');
+            
+            if (reviewState.showAnswer) {
+                currentIndex++;
+                renderReview();
+                return;
+            }
+
+            const val = input.value.toLowerCase().trim();
+            const correct = item.qType === 'meaning' 
+                ? item.meanings.some(m => m.toLowerCase() === val)
+                : item.readings.some(r => r.toLowerCase() === val);
+
+            reviewState.showAnswer = true;
+            input.disabled = true;
+            document.getElementById('btn-review-submit').classList.remove('hidden');
+
+            if (!correct) {
+                if (!reviewState.performance[item.id]) reviewState.performance[item.id] = 0;
+                reviewState.performance[item.id]++;
+                
+                input.className = "w-full text-center text-2xl p-6 outline-none transition-colors font-medium bg-red-500 text-white placeholder-red-200";
+                document.getElementById('review-error').classList.remove('hidden');
+                document.getElementById('review-correct-answer').textContent = item.qType === 'meaning' ? item.meanings.join(', ') : item.readings.join(', ');
+                document.getElementById('review-error-mnemonic').textContent = item.qType === 'meaning' ? item.meaningMnemonic : item.readingMnemonic;
+            } else {
+                if (reviewState.performance[item.id] === undefined) reviewState.performance[item.id] = 0;
+                input.className = "w-full text-center text-2xl p-6 outline-none transition-colors font-medium bg-green-500 text-white placeholder-green-200";
+            }
+        };
+
+        function finishReviews() {
+            const updates = {};
+            const uniqueIds = [...new Set(queue.map(q => q.id))];
+            let correctCount = 0;
+
+            uniqueIds.forEach(id => {
+                const mistakes = reviewState.performance[id] || 0;
+                const currentStage = progress[id].stage;
+                let newStage;
+                if (mistakes === 0) {
+                    newStage = Math.min(currentStage + 1, 9);
+                    correctCount++;
+                } else {
+                    newStage = Math.max(currentStage - Math.ceil(mistakes / 2), 1);
+                }
+                updates[id] = { stage: newStage, nextReview: newStage === 9 ? null : Date.now() + SRS_INTERVALS[newStage] };
+            });
+
+            document.getElementById('summary-items').textContent = uniqueIds.length;
+            document.getElementById('summary-accuracy').textContent = Math.round((correctCount / uniqueIds.length) * 100) + '%';
+            
+            saveProgress(updates).then(() => {
+                switchView('summary');
+            });
+        }
+
+        // --- Init ---
+        els.btnQuit.onclick = updateDashboard;
+        document.getElementById('btn-summary-home').onclick = updateDashboard;
+
+        // Boot up Firebase Auth and fetch initial data
+        signInAnonymously(auth);
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('user-id-display').textContent = `Device Auth ID: ${user.uid}`;
+                
+                // Listen to Cloud Data
+                onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'main'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        progress = docSnap.data();
+                    } else {
+                        // First time, init zeros
+                        ITEM_DB.forEach(item => { progress[item.id] = { stage: 0, nextReview: null }; });
+                        saveProgress({}); // Saves the init state
+                    }
+                    updateDashboard();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
