@@ -7,16 +7,15 @@ import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 // --- FIREBASE INITIALIZATION ---
 // In your actual GitHub project, you will replace these with your own Firebase config variables.
 // The code below uses environment variables provided by this sandbox, with fallbacks for your local setup.
-const firebaseConfig = typeof __firebase_config !== 'undefined' 
-  ? JSON.parse(__firebase_config) 
-  : {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyBg0TS7T4HdV_d1XfhYAE-PaVzyHgzw8CE",
+  authDomain: "web-kanji-srs.firebaseapp.com",
+  projectId: "web-kanji-srs",
+  storageBucket: "web-kanji-srs.firebasestorage.app",
+  messagingSenderId: "131146137850",
+  appId: "1:131146137850:web:0789cf3ebe3e9d3b2e4943",
+  measurementId: "G-DE974KLLB9"
+};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
