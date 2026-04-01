@@ -6,7 +6,6 @@
     <title>Kita-ku Kanji SRS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* A few custom utility classes */
         .hidden { display: none !important; }
         body { background-color: #f5f5f4; color: #292524; font-family: system-ui, -apple-system, sans-serif; }
     </style>
@@ -24,24 +23,19 @@
     </header>
 
     <main class="max-w-4xl mx-auto p-4 md:p-8" id="app-container">
-        
         <div id="view-dashboard" class="space-y-8 hidden">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white rounded-sm shadow-sm border border-stone-200 p-8 flex flex-col items-center text-center">
                     <div class="text-4xl mb-4">🎓</div>
                     <h2 class="text-2xl font-bold mb-1">Lessons</h2>
                     <p class="text-stone-500 mb-6 font-medium" id="lesson-count">0 available</p>
-                    <button id="btn-start-lessons" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-semibold py-3 px-6 rounded-sm transition-colors disabled:opacity-50">
-                        Start Lessons
-                    </button>
+                    <button id="btn-start-lessons" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-semibold py-3 px-6 rounded-sm transition-colors disabled:opacity-50">Start Lessons</button>
                 </div>
                 <div class="bg-white rounded-sm shadow-sm border border-stone-200 p-8 flex flex-col items-center text-center">
                     <div class="text-4xl mb-4">📖</div>
                     <h2 class="text-2xl font-bold mb-1">Reviews</h2>
                     <p class="text-stone-500 mb-6 font-medium" id="review-count">0 available</p>
-                    <button id="btn-start-reviews" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-semibold py-3 px-6 rounded-sm transition-colors disabled:opacity-50">
-                        Start Reviews
-                    </button>
+                    <button id="btn-start-reviews" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-semibold py-3 px-6 rounded-sm transition-colors disabled:opacity-50">Start Reviews</button>
                 </div>
             </div>
             <div class="mt-8 text-center text-xs text-stone-400 font-mono" id="user-id-display">
@@ -72,9 +66,7 @@
                 </div>
                 <div class="flex justify-between items-center pt-6 border-t border-stone-100">
                     <span id="lesson-progress" class="text-sm text-stone-500 font-medium"></span>
-                    <button id="btn-lesson-next" class="bg-stone-900 hover:bg-stone-800 text-white px-8 py-3 rounded-sm font-semibold transition-colors">
-                        Next Item ➔
-                    </button>
+                    <button id="btn-lesson-next" class="bg-stone-900 hover:bg-stone-800 text-white px-8 py-3 rounded-sm font-semibold transition-colors">Next Item ➔</button>
                 </div>
             </div>
         </div>
@@ -113,37 +105,32 @@
                     <div class="text-xs font-bold text-stone-400 uppercase tracking-wider">Accuracy</div>
                 </div>
             </div>
-            <button id="btn-summary-home" class="bg-stone-900 hover:bg-stone-800 text-white font-semibold py-4 px-8 rounded-sm transition-colors">
-                Return to Dashboard
-            </button>
+            <button id="btn-summary-home" class="bg-stone-900 hover:bg-stone-800 text-white font-semibold py-4 px-8 rounded-sm transition-colors">Return to Dashboard</button>
         </div>
     </main>
 
     <script type="module">
-        // 1. Import Firebase securely from Google's CDN
+        console.log("BOOT SEQUENCE INITIATED: The script is running!");
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // ==========================================
-        // PUT YOUR FIREBASE CONFIG HERE
-        // ==========================================
         const firebaseConfig = {
-        apiKey: "AIzaSyBg0TS7T4HdV_d1XfhYAE-PaVzyHgzw8CE",
-        authDomain: "web-kanji-srs.firebaseapp.com",
-        projectId: "web-kanji-srs",
-        storageBucket: "web-kanji-srs.firebasestorage.app",
-        messagingSenderId: "131146137850",
-        appId: "1:131146137850:web:0789cf3ebe3e9d3b2e4943",
-        measurementId: "G-DE974KLLB9"
-      };
+            apiKey: "AIzaSyBg0TS7T4HdV_d1XfhYAE-PaVzyHgzw8CE",
+            authDomain: "web-kanji-srs.firebaseapp.com",
+            projectId: "web-kanji-srs",
+            storageBucket: "web-kanji-srs.firebasestorage.app",
+            messagingSenderId: "131146137850",
+            appId: "1:131146137850:web:0789cf3ebe3e9d3b2e4943",
+            measurementId: "G-DE974KLLB9"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'kitaku-kanji-srs';
 
-        // --- Data & State ---
         const ITEM_DB = [
             { id: 'k_ku', type: 'kanji', char: '区', meanings: ['ward', 'district'], readings: ['く'], meaningMnemonic: 'This box has a giant X in it. It marks your specific ward or district on the map.', readingMnemonic: 'Which district do you live in? Kita-ku (く).' },
             { id: 'k_yaku', type: 'kanji', char: '役', meanings: ['duty', 'service', 'role'], readings: ['やく'], meaningMnemonic: 'You are walking with a weapon to do your duty and public service.', readingMnemonic: 'Public service gives you a lot of yak (やく) to deal with.' },
@@ -156,10 +143,9 @@
         let progress = {};
         let queue = [];
         let currentIndex = 0;
-        let sessionMode = null; // 'lesson' or 'review'
+        let sessionMode = null;
         let reviewState = { showAnswer: false, isCorrect: null, performance: {} };
 
-        // --- DOM Elements ---
         const els = {
             syncStatus: document.getElementById('sync-status'),
             btnQuit: document.getElementById('btn-quit'),
@@ -171,7 +157,6 @@
             }
         };
 
-        // --- Core Functions ---
         function switchView(viewName) {
             Object.values(els.views).forEach(v => v.classList.add('hidden'));
             els.views[viewName].classList.remove('hidden');
@@ -190,7 +175,7 @@
             } catch (e) {
                 console.error(e);
                 els.syncStatus.textContent = 'Sync Error';
-                els.syncStatus.className = 'text-sm font-mono text-red-400';
+                els.syncStatus.className = 'text-sm font-mono text-red-400 font-bold';
             }
         }
 
@@ -217,7 +202,7 @@
                     rq.push({ ...item, qType: 'meaning' });
                     rq.push({ ...item, qType: 'reading' });
                 });
-                rq.sort(() => Math.random() - 0.5); // Shuffle
+                rq.sort(() => Math.random() - 0.5);
                 startSession('review', rq);
             };
             switchView('dashboard');
@@ -228,13 +213,9 @@
             queue = items;
             currentIndex = 0;
             if (mode === 'lesson') renderLesson();
-            if (mode === 'review') {
-                reviewState.performance = {};
-                renderReview();
-            }
+            if (mode === 'review') { reviewState.performance = {}; renderReview(); }
         }
 
-        // --- Lesson Logic ---
         function renderLesson() {
             if (currentIndex >= queue.length) return finishLessons();
             const item = queue[currentIndex];
@@ -263,7 +244,6 @@
             saveProgress(updates).then(updateDashboard);
         }
 
-        // --- Review Logic ---
         function renderReview() {
             if (currentIndex >= queue.length) return finishReviews();
             const item = queue[currentIndex];
@@ -284,7 +264,7 @@
             document.getElementById('btn-review-submit').classList.add('hidden');
             document.getElementById('review-error').classList.add('hidden');
             switchView('review');
-            setTimeout(() => input.focus(), 50); // Auto-focus input
+            setTimeout(() => input.focus(), 50);
         }
 
         document.getElementById('review-form').onsubmit = (e) => {
@@ -341,48 +321,39 @@
 
             document.getElementById('summary-items').textContent = uniqueIds.length;
             document.getElementById('summary-accuracy').textContent = Math.round((correctCount / uniqueIds.length) * 100) + '%';
-            
-            saveProgress(updates).then(() => {
-                switchView('summary');
-            });
+            saveProgress(updates).then(() => switchView('summary'));
         }
 
-        // --- Init ---
         els.btnQuit.onclick = updateDashboard;
         document.getElementById('btn-summary-home').onclick = updateDashboard;
 
-        // Boot up Firebase Auth and fetch initial data
-     // Boot up Firebase Auth and fetch initial data
-signInAnonymously(auth).catch((error) => {
-    // This catches the silent failure and prints it to the UI
-    console.error("FIREBASE AUTH ERROR:", error.code, error.message);
-    const statusEl = document.getElementById('sync-status');
-    statusEl.textContent = 'Auth Blocked: ' + error.code;
-    statusEl.className = 'text-sm font-mono text-red-500 font-bold';
-    alert("Firebase Error: " + error.message + "\n\nDid you add your GitHub domain to the Firebase Authorized Domains list?");
-});
-
-onAuthStateChanged(auth, user => {
-    if (user) {
-        currentUser = user;
-        document.getElementById('user-id-display').textContent = `Device Auth ID: ${user.uid}`;
-        
-        // Listen to Cloud Data
-        onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'main'), (docSnap) => {
-            if (docSnap.exists()) {
-                progress = docSnap.data();
-            } else {
-                // First time, init zeros
-                ITEM_DB.forEach(item => { progress[item.id] = { stage: 0, nextReview: null }; });
-                saveProgress({}); // Saves the init state
-            }
-            updateDashboard();
-        }, (dbError) => {
-            console.error("FIRESTORE ERROR:", dbError);
-            document.getElementById('sync-status').textContent = 'DB Read Error';
+        // Start Firebase Auth with error catch
+        signInAnonymously(auth).catch(err => {
+            console.error("AUTH BLOCKED:", err.code, err.message);
+            els.syncStatus.textContent = 'Auth Blocked';
+            els.syncStatus.className = 'text-sm font-mono text-red-500 font-bold';
+            alert(`Firebase blocked the connection.\n\nError: ${err.message}\n\nPlease check: \n1. Is Anonymous Auth enabled in Firebase? \n2. Is your GitHub Pages domain in the Authorized Domains list?`);
         });
-    }
-});
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('user-id-display').textContent = `Device Auth ID: ${user.uid}`;
+                
+                onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'main'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        progress = docSnap.data();
+                    } else {
+                        ITEM_DB.forEach(item => { progress[item.id] = { stage: 0, nextReview: null }; });
+                        saveProgress({});
+                    }
+                    updateDashboard();
+                }, (err) => {
+                    console.error("DB ERROR:", err);
+                    els.syncStatus.textContent = 'DB Read Error';
+                });
+            }
+        });
     </script>
 </body>
 </html>
