@@ -352,25 +352,37 @@
         document.getElementById('btn-summary-home').onclick = updateDashboard;
 
         // Boot up Firebase Auth and fetch initial data
-        signInAnonymously(auth);
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('user-id-display').textContent = `Device Auth ID: ${user.uid}`;
-                
-                // Listen to Cloud Data
-                onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'main'), (docSnap) => {
-                    if (docSnap.exists()) {
-                        progress = docSnap.data();
-                    } else {
-                        // First time, init zeros
-                        ITEM_DB.forEach(item => { progress[item.id] = { stage: 0, nextReview: null }; });
-                        saveProgress({}); // Saves the init state
-                    }
-                    updateDashboard();
-                });
+     // Boot up Firebase Auth and fetch initial data
+signInAnonymously(auth).catch((error) => {
+    // This catches the silent failure and prints it to the UI
+    console.error("FIREBASE AUTH ERROR:", error.code, error.message);
+    const statusEl = document.getElementById('sync-status');
+    statusEl.textContent = 'Auth Blocked: ' + error.code;
+    statusEl.className = 'text-sm font-mono text-red-500 font-bold';
+    alert("Firebase Error: " + error.message + "\n\nDid you add your GitHub domain to the Firebase Authorized Domains list?");
+});
+
+onAuthStateChanged(auth, user => {
+    if (user) {
+        currentUser = user;
+        document.getElementById('user-id-display').textContent = `Device Auth ID: ${user.uid}`;
+        
+        // Listen to Cloud Data
+        onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'main'), (docSnap) => {
+            if (docSnap.exists()) {
+                progress = docSnap.data();
+            } else {
+                // First time, init zeros
+                ITEM_DB.forEach(item => { progress[item.id] = { stage: 0, nextReview: null }; });
+                saveProgress({}); // Saves the init state
             }
+            updateDashboard();
+        }, (dbError) => {
+            console.error("FIRESTORE ERROR:", dbError);
+            document.getElementById('sync-status').textContent = 'DB Read Error';
         });
+    }
+});
     </script>
 </body>
 </html>
